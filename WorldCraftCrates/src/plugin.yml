@@ -1,0 +1,9 @@
+main: me.Latestion.Crates.Main
+name: WorldCraftCrates
+author: Latestion
+api-version: 1.13
+version: 1.0
+depend: [Vault]
+
+commands:
+  crate:
