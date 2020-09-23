@@ -84,7 +84,7 @@ public class Executor implements CommandExecutor {
 					plugin.data.getConfig().set("shulker." + plugin.util.locToString(block.getLocation()) + ".crate-name", name);
 					plugin.data.saveConfig();
 					Crate crate = new Crate(plugin, name);
-					crate.createArmorStand(block.getLocation().clone().add(0.5, -0.5, 0.5), block.getLocation());
+					crate.createArmorStand(block.getLocation());
 				}
 			}
 			

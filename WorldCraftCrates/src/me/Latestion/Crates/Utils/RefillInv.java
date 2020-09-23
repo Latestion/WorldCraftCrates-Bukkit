@@ -6,7 +6,6 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -36,6 +35,7 @@ public class RefillInv {
 		setClose(invv);
 		setArrow(invv);
 		int i = 9;
+		invs.add(invv);
 		Inventory set = invv;
 		Crate crate = new Crate(plugin, name);
 		List<ItemStack> items = crate.getCrateItems();
@@ -48,12 +48,11 @@ public class RefillInv {
 			}
 			i++;
 		}
-		invs.add(invv);
 	}
 	
 	
 	public Inventory getInventory() {
-		return invv;
+		return invs.get(0);
 	}
 	
 	public Inventory createNewInv() {
@@ -91,15 +90,9 @@ public class RefillInv {
 			player.sendMessage(ChatColor.RED + "Cannot create an empty crate!");
 			return;
 		}
-		plugin.data.getConfig().set("crates." + name + ".items", items);
-		plugin.data.saveConfig();
-		player.sendMessage(ChatColor.GOLD + "Crate has been created!");
+		player.sendMessage(ChatColor.GOLD + "Crate has been updates!");
 		Crate crate = new Crate(plugin, name);
 		crate.setCrateItems(items);
-		for (OfflinePlayer p : Bukkit.getOfflinePlayers()) {
-			plugin.data.getConfig().set("data." + p.getUniqueId().toString() + "." + name, 0);
-			plugin.data.saveConfig();
-		}
 	}
 	
 	private ItemStack glass() {

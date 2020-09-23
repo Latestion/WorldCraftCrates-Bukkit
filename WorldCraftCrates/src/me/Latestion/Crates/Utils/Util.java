@@ -35,15 +35,15 @@ public class Util {
 	}
 	
 	public boolean isCrate(String name) {
+		boolean[] bols = {false};
 		try {
-			for (String key : plugin.data.getConfig().getConfigurationSection("crates").getKeys(false)) {
-				if (key.equalsIgnoreCase(name)) {
-					return true;
-				}
-			}
+			plugin.data.getConfig().getConfigurationSection("crates").getKeys(false).forEach(key -> {
+				if (key.equalsIgnoreCase(name))
+					bols[0] = true;
+			});
 		} catch (Exception e) {
 		}
-		return false;
+		return bols[0];
 	}
 	
 	public boolean isNum(String i) {
@@ -97,15 +97,20 @@ public class Util {
     
     public boolean isLocationTaken(Location loc) {
     	List<Location> test = new ArrayList<>();
-    	plugin.data.getConfig().getConfigurationSection("shulker").getKeys(false).forEach(key -> {
-    		test.add(this.stringToLoc(key));
-    	});
-    	if (test.contains(loc)) {
-    		return true;
-    	}
-    	else {
-    		return false;
-    	}
+    	try {
+			plugin.data.getConfig().getConfigurationSection("shulker").getKeys(false).forEach(key -> {
+				test.add(this.stringToLoc(key));
+			});
+			if (test.contains(loc)) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		} catch (Exception e) {
+
+		}
+    	return false;
     }
     
 }

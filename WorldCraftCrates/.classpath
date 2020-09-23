@@ -4,5 +4,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="C:/Users/User/Desktop/EssentialsX-2.18.1.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/User/Desktop/Test 1.15.2/spigot-1.15.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/User/Desktop/HolographicDisplays-2.4.5-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -139,7 +139,12 @@ public class InventoryClick implements Listener {
 			if (event.getSlot() == 50) {
 				if (crate.isInventoryFull(event.getInventory())) {
 					plugin.cache.add(player);
-					player.openInventory(crate.createNewInv());
+					int index = crate.invs.indexOf(event.getInventory());
+					int size = crate.invs.size() - 1;
+					if (size > index) {
+						player.openInventory(crate.invs.get(index + 1));
+					}
+					else player.openInventory(crate.createNewInv());
 				}
 			}
 			if (event.getSlot() == 4) {

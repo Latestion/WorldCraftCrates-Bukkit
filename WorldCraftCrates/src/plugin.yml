@@ -3,7 +3,7 @@ name: WorldCraftCrates
 author: Latestion
 api-version: 1.13
 version: 1.0
-depend: [Vault]
+depend: [Vault, HolographicDisplays]
 
 commands:
   crate:

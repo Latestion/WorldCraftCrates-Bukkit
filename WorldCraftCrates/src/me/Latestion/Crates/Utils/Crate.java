@@ -10,16 +10,15 @@ import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_15_R1.entity.CraftEntity;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import com.gmail.filoghost.holographicdisplays.api.Hologram;
+import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
+
 import me.Latestion.Crates.Main;
 import net.minecraft.server.v1_15_R1.BlockPosition;
-import net.minecraft.server.v1_15_R1.NBTTagCompound;
 import net.minecraft.server.v1_15_R1.TileEntityShulkerBox;
 
 public class Crate {
@@ -81,6 +80,9 @@ public class Crate {
 	public void setPrice(int price) {
 		plugin.data.getConfig().set("crates." + name + ".price", price);
 		plugin.data.saveConfig();
+		
+		// Change the HOLO Price of all shulkers here
+		
 	}
 	
 	public int getPlayerCrate(Player player) {
@@ -94,82 +96,33 @@ public class Crate {
 	
 	public void purchase(Block block, Player player) {
 		Location loc = block.getLocation();
-		tele(getUpperArmorStand(loc), getUpperArmorStand(loc).getLocation());
-		tele(getLowerArmorStand(loc), getLowerArmorStand(loc).getLocation());
 		plugin.inProcess.add(block);
         new SpawnParticles(plugin, loc, 5, Particle.TOTEM); // Spawns the particles
         ItemStack item = getRandomItem();
+        String itemname = item.getItemMeta().getDisplayName();
+        if (itemname.equals("")) {
+        	itemname = item.getType().toString().replace('_', ' ');
+        }
+		renameHologram(block, player.getName(), item.getAmount(), itemname, 10);
         openShulker(loc, 10, block);
-        armorStandRotateAnimate(loc.clone().subtract(0, 1, 0), 10, item);
-        updateArmorStandName(ChatColor.BOLD + "" + ChatColor.GOLD + player.getName(), ChatColor.WHITE + "Has won " 
-        + item.getAmount() + "x " + item.getItemMeta().getDisplayName() + "!", 10, loc);
+        Location rotateLoc = loc.clone().subtract(0, 1, 0);
+        if (!item.getType().isBlock()) {
+        	rotateLoc.subtract(0, 0.25, 0);
+        }
+        armorStandRotateAnimate(block.getLocation(), 10, item, rotateLoc.clone());
         List<ItemStack> items = this.getCrateItems();
         items.remove(item);
         this.setCrateItems(items);
         player.getInventory().addItem(item);
         player.updateInventory();
 	}
-
-	public ArmorStand getUpperArmorStand(Location loc) {
-		for (Entity en : loc.getWorld().getNearbyEntities(loc.clone().add(0, 1, 0), 3, 3, 3)) {
-			if (en instanceof ArmorStand) {
-				if (en.getUniqueId().toString().equals(getUpperArmorStandID(loc))) {
-					return ((ArmorStand) en);
-				}
-			}
-		}
-		return null;
-	}
 	
-	public ArmorStand getLowerArmorStand(Location loc) {
-		for (Entity en : loc.getWorld().getNearbyEntities(loc.clone().add(0, 1, 0), 3, 3, 3)) {
-			if (en instanceof ArmorStand) {
-				if (en.getUniqueId().toString().equals(getLowerArmorStandID(loc))) {
-					return ((ArmorStand) en);
-				}
-			}
-		}
-		return null;
-	}
-	
-	public String getUpperArmorStandID(Location loc) {
-		String send = plugin.data.getConfig().getString("shulker." + plugin.util.locToString(loc) + ".as." + "upper");
-		return send;
-	}
-	
-	public String getLowerArmorStandID(Location loc) {
-		String send = plugin.data.getConfig().getString("shulker." + plugin.util.locToString(loc) + ".as" + ".lower");
-		return send;
-	}
-	
-	public void createArmorStand(Location loc, Location save) {
-		ArmorStand upperAs = (ArmorStand) loc.getWorld().spawnEntity(loc.clone().add(0, 1, 0), EntityType.ARMOR_STAND);
-		prepareArmorStand(upperAs);
-		upperAs.setCustomName(format(ChatColor.BOLD + "" + ChatColor.GOLD + name));
-		plugin.data.getConfig().set("shulker." + plugin.util.locToString(save) + ".as.upper", upperAs.getUniqueId().toString());
-		plugin.data.saveConfig();
-		freezeEntity(upperAs);
-		
-		ArmorStand lowerAs = (ArmorStand) loc.getWorld().spawnEntity(loc.clone().add(0, 0.77, 0), EntityType.ARMOR_STAND);
-		prepareArmorStand(lowerAs);
-		lowerAs.setCustomName(getPrice() + " Dollars");
-		plugin.data.getConfig().set("shulker." + plugin.util.locToString(save) + ".as.lower", lowerAs.getUniqueId().toString());
-		plugin.data.saveConfig();
-		freezeEntity(lowerAs);
-	}
-	
-	public void updateArmorStandName(String up, String down, int duration, Location loc) {
-		getUpperArmorStand(loc).setCustomName(format(up));
-		getLowerArmorStand(loc).setCustomName(format(down));
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            public void run() {
-            	getUpperArmorStand(loc).setCustomName(format(name));
-            	getLowerArmorStand(loc).setCustomName(getPrice() + " Dollars");
-            	if (isEmpty()) {
-            		getUpperArmorStand(loc).setCustomName(format(ChatColor.BOLD + "" + ChatColor.GOLD + "(Empty) " + name));
-            	}
-            }            
-        }, duration * 20);
+	public Hologram createArmorStand(Location loc) {
+		Hologram hologram = HologramsAPI.createHologram(plugin, loc.clone().add(0.5, 2.0, 0.5)); 
+		hologram.appendTextLine(ChatColor.BOLD + "" + ChatColor.GOLD + name.substring(0, name.length() - 1));
+		hologram.appendTextLine(ChatColor.WHITE + "" + getPrice() + " Dollars");
+		plugin.holoInstance.put(loc, hologram);
+		return hologram;
 	}
 	
 	private void openShulker(Location loc, int i, Block block) {
@@ -185,16 +138,21 @@ public class Crate {
         }, i * 20);
 	}
 	
-    private void armorStandRotateAnimate(Location loc, int i, ItemStack item){
-    	ArmorStand as = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
+    private void armorStandRotateAnimate(Location a, int i, ItemStack item, Location loc){
+    	ArmorStand as = plugin.asInstance.get(a);
+    	as.teleport(loc);
+    	as.setVisible(false);
     	prepareArmorStand(as, item);
+    	plugin.mani.add(as);
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             public void run() {
+            	plugin.mani.remove(as);
             	as.remove();
             }            
         }, i * 20);
     	plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
         	if (as.isDead()) {
+        		plugin.mani.remove(as);
         		return;
         	}
             loc.setYaw(loc.getYaw() +  4);
@@ -220,35 +178,34 @@ public class Crate {
     	as.setCollidable(false);
     }
     
-    private void prepareArmorStand(ArmorStand as) {
-    	as.setVisible(false);
-    	as.setMarker(false);
-    	as.setBasePlate(false);
-    	as.setSmall(true);
-    	as.setInvulnerable(true);
-    	as.setAI(false);
-    	as.setGravity(false);
-    	as.setCollidable(false);
-    	as.setCustomNameVisible(true);
+    private void renameHologram(Block loc, String pName, int amount, String item, int duration) {
+    	Hologram gram = plugin.holoInstance.get(loc.getLocation());
+    	gram.clearLines();
+    	gram.appendTextLine(ChatColor.BOLD + "" + ChatColor.GOLD + pName);
+    	gram.appendTextLine(ChatColor.WHITE + "Has won " + amount + "x " + item + "!");
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            public void run() {
+            	/*
+            	 * ChatColor.BOLD + "" + ChatColor.GOLD + name.substring(0, name.length() - 1)
+            	 * ChatColor.WHITE + "" + getPrice() + " Dollars"
+            	 */
+            	gram.clearLines();
+            	gram.appendTextLine(ChatColor.BOLD + "" + ChatColor.GOLD + name.substring(0, name.length() - 1));
+            	gram.appendTextLine(ChatColor.WHITE + "" + getPrice() + " Dollars");
+            }            
+        }, duration * 20);
     }
     
-    private String format(String s) {
-    	return ChatColor.translateAlternateColorCodes('&', s);
+    public void updateHoloPrice() {
+    	plugin.data.getConfig().getConfigurationSection("shulker").getKeys(false).forEach(key -> {
+    		Location loc = plugin.util.stringToLoc(key);
+        	Hologram gram = plugin.holoInstance.get(loc);
+        	gram.clearLines();
+        	gram.appendTextLine(ChatColor.BOLD + "" + ChatColor.GOLD + name.substring(0, name.length() - 1));
+        	gram.appendTextLine(ChatColor.WHITE + "" + getPrice() + " Dollars");
+    	});	
     }
     
-    private void tele(ArmorStand as, Location loc) {
-    	plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-        	as.teleport(loc);
-        }, 0, 1);
-    }
-    
-    public void freezeEntity(Entity en){
-        net.minecraft.server.v1_15_R1.Entity nmsEn = ((CraftEntity) en).getHandle();
-        NBTTagCompound compound = new NBTTagCompound();
-        nmsEn.c(compound);
-        compound.setByte("NoAI", (byte) 1);
-        nmsEn.f(compound);
-    }   
 }
 
 /* crates:
@@ -265,7 +222,4 @@ public class Crate {
  * shulker:
  *   location: 
  *     crate-name: name
- *     as:
- *       upper: UUID
- *       lower: UUID
  */   
