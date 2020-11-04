@@ -2,10 +2,13 @@ package me.Latestion.Crates.Commands;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import me.Latestion.Crates.Main;
@@ -24,73 +27,144 @@ public class Executor implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		
-		if (!(sender instanceof Player)) {
-			return false;
-		}
-		
-		Player player = (Player) sender;
-		
-		if (label.equalsIgnoreCase("crate")) {
+		if (sender instanceof Player) {
+			Player player = (Player) sender;
+			
+			if (label.equalsIgnoreCase("crate")) {
 
-			if (args.length == 0) {
-				player.sendMessage(ChatColor.RED + "/crate create {cratename}" + ChatColor.WHITE + ": Creates the desierd crate!");
-				player.sendMessage(ChatColor.RED + "/crate set {cratename}" + ChatColor.WHITE + ": Set the shulker box to crate!");
-				player.sendMessage(ChatColor.RED + "/crate setprice {cratename}" + ChatColor.WHITE + ": Sets the price of crate!");
-				player.sendMessage(ChatColor.RED + "/crate refill {cratename}" + ChatColor.WHITE + ": Refills the crate!");
-				return false;
-			}
-			
-			if (args[0].equalsIgnoreCase("create")) {
-				// Create a new crate
-				if (sender.hasPermission("crate.create")) {
-					if (args.length == 1) {
-						return false;
-					}
-					String name = stringBuilder(args, 1);
-					
-					if (plugin.isBeingCreated.contains(name)) {
-						return false;
-					}
-					
-					if (plugin.util.isCrate(name)) {
-						return false;
-					}
-					
-					CreateCrate crate = new CreateCrate(plugin, name, player);
-					player.openInventory(crate.getInventory());
-					plugin.newCrates.put(player, crate);
-					plugin.isCreating.add(player);
-					plugin.isBeingCreated.add(name);
-				
+				if (args.length == 0) {
+					player.sendMessage(ChatColor.RED + "/crate create {cratename}" + ChatColor.WHITE + ": Creates the desierd crate!");
+					player.sendMessage(ChatColor.RED + "/crate set {cratename}" + ChatColor.WHITE + ": Set the shulker box to crate!");
+					player.sendMessage(ChatColor.RED + "/crate setprice {cratename}" + ChatColor.WHITE + ": Sets the price of crate!");
+					player.sendMessage(ChatColor.RED + "/crate refill {cratename}" + ChatColor.WHITE + ": Refills the crate!");
+					return false;
 				}
-			}
-			
-			if (args[0].equalsIgnoreCase("set")) {
-				// Set it to shulker box here
-				if (player.hasPermission("crate.set")) {
-					Block block = player.getTargetBlockExact(5);	
-					if (block == null) {
-						return false;
-					}	
-					if (args.length == 1) {
-						return false;
-					}
-					String name = stringBuilder(args, 1);
-					
-					if (!plugin.util.isCrate(name)) {
-						return false;
-					}
 				
-					plugin.data.getConfig().set("shulker." + plugin.util.locToString(block.getLocation()) + ".crate-name", name);
-					plugin.data.saveConfig();
-					Crate crate = new Crate(plugin, name);
-					crate.createArmorStand(block.getLocation());
+				if (args[0].equalsIgnoreCase("create")) {
+					// Create a new crate
+					if (sender.hasPermission("crate.create")) {
+						if (args.length == 1) {
+							return false;
+						}
+						String name = stringBuilder(args, 1);
+						
+						if (plugin.isBeingCreated.contains(name)) {
+							return false;
+						}
+						
+						if (plugin.util.isCrate(name)) {
+							return false;
+						}
+						
+						CreateCrate crate = new CreateCrate(plugin, name, player);
+						player.openInventory(crate.getInventory());
+						plugin.newCrates.put(player, crate);
+						plugin.isCreating.add(player);
+						plugin.isBeingCreated.add(name);
+					
+					}
 				}
-			}
-			
+				
+				if (args[0].equalsIgnoreCase("set")) {
+					// Set it to shulker box here
+					if (player.hasPermission("crate.set")) {
+						Block block = player.getTargetBlockExact(5);	
+						if (block == null) {
+							return false;
+						}	
+						if (args.length == 1) {
+							return false;
+						}
+						String name = stringBuilder(args, 1);
+						
+						if (!plugin.util.isCrate(name)) {
+							return false;
+						}
+					
+						plugin.data.getConfig().set("shulker." + plugin.util.locToString(block.getLocation()) + ".crate-name", name);
+						plugin.data.saveConfig();
+						Crate crate = new Crate(plugin, name);
+						crate.createArmorStand(block.getLocation());
+						
+						Location loc = block.getLocation();
+						ArmorStand as = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
+						plugin.prepareArmorStand(as);
+						plugin.asInstance.put(loc, as);
+					}
+				}
+				
+				if (args[0].equalsIgnoreCase("setprice")) {
+					// Set the price of crate with the crate name and eco plugin will be used
+					if (player.hasPermission("crate.setprice")) {
+						if (args.length < 2) {
+							return false;
+						}	
+						String name = stringBuilder(args, 1, args.length - 1);
+						
+						if (!plugin.util.isCrate(name)) {
+							return false;
+						}
+						
+						if (!plugin.util.isNum(args[args.length - 1])) {
+							return false;
+						}
+						
+						Crate crate = new Crate(plugin, name);
+						crate.setPrice(plugin.util.parseInt(args[args.length - 1]));
+					}
+				}
+				
+				if (args[0].equalsIgnoreCase("give")) {
+					if (sender.hasPermission("crate.give")) {
+						if (args.length == 1 || args.length == 2) {
+							return false;
+						}
+						try {
+							Player target = Bukkit.getPlayer(plugin.idInstance.get(args[1]));
+							String name = stringBuilder(args, 2, args.length - 1);
+							int i = plugin.util.parseInt(args[args.length - 1]);
+							int current = plugin.data.getConfig().getInt("data." + player.getUniqueId().toString() + "." + name);
+							plugin.data.getConfig().set("data." + target.getUniqueId().toString() + "." + name, (current + i));
+							plugin.data.saveConfig();
+						} catch (Exception e) {
+							return false;
+						}
+						
+					}
+				}
+				
+				if (args[0].equalsIgnoreCase("refill")) {
+					
+					if (player.hasPermission("crate.refill"))  {
+						String name = stringBuilder(args, 1);
+						
+						if (!plugin.util.isCrate(name)) {
+							return false;
+						}
+						RefillInv inv = new RefillInv(plugin, name, player);
+						player.openInventory(inv.getInventory());
+						plugin.refillInv.put(player, inv);
+					}
+				}
+				
+				if (args[0].equalsIgnoreCase("remove")) {
+					
+					if (player.hasPermission("crate.remove")) {
+						if (args.length == 1) {
+							return false;
+						}
+						// REMOVE LOCATION WITH THE CRATES TOO
+						// REMOVE THIS CRATE FROM ALL HASHMAPS
+						plugin.data.getConfig().set("crates." + stringBuilder(args, 1), null);
+						plugin.data.saveConfig();	
+					}
+				}
+			}	
+		}
+		else {
 			if (args[0].equalsIgnoreCase("setprice")) {
 				// Set the price of crate with the crate name and eco plugin will be used
-				if (player.hasPermission("crate.setprice")) {
+				if (sender.hasPermission("crate.setprice")) {
 					if (args.length < 2) {
 						return false;
 					}	
@@ -108,9 +182,8 @@ public class Executor implements CommandExecutor {
 					crate.setPrice(plugin.util.parseInt(args[args.length - 1]));
 				}
 			}
-			
 			if (args[0].equalsIgnoreCase("give")) {
-				if (player.hasPermission("crate.give")) {
+				if (sender.hasPermission("crate.give")) {
 					if (args.length == 1 || args.length == 2) {
 						return false;
 					}
@@ -118,7 +191,7 @@ public class Executor implements CommandExecutor {
 						Player target = Bukkit.getPlayer(plugin.idInstance.get(args[1]));
 						String name = stringBuilder(args, 2, args.length - 1);
 						int i = plugin.util.parseInt(args[args.length - 1]);
-						int current = plugin.data.getConfig().getInt("data." + player.getUniqueId().toString() + "." + name);
+						int current = plugin.data.getConfig().getInt("data." + target.getUniqueId().toString() + "." + name);
 						plugin.data.getConfig().set("data." + target.getUniqueId().toString() + "." + name, (current + i));
 						plugin.data.saveConfig();
 					} catch (Exception e) {
@@ -127,30 +200,21 @@ public class Executor implements CommandExecutor {
 					
 				}
 			}
-			
-			if (args[0].equalsIgnoreCase("refill")) {
+			if (args[0].equalsIgnoreCase("remove")) {
 				
-				if (player.hasPermission("crate.refill"))  {
-					String name = stringBuilder(args, 1);
-					
-					if (!plugin.util.isCrate(name)) {
+				if (sender.hasPermission("crate.remove")) {
+					if (args.length == 1) {
 						return false;
 					}
-					RefillInv inv = new RefillInv(plugin, name, player);
-					player.openInventory(inv.getInventory());
-					plugin.refillInv.put(player, inv);
+					// REMOVE LOCATION WITH THE CRATES TOO
+					// REMOVE THIS CRATE FROM ALL HASHMAPS
+					plugin.data.getConfig().set("crates." + stringBuilder(args, 1), null);
+					plugin.data.saveConfig();	
 				}
 			}
+		}
+		if (label.equalsIgnoreCase("crateloot")) {
 			
-			if (args[0].equalsIgnoreCase("remove")) {
-				if (args.length == 1) {
-					return false;
-				}
-				// REMOVE LOCATION WITH THE CRATES TOO
-				// REMOVE THIS CRATE FROM ALL HASHMAPS
-				plugin.data.getConfig().set("crates." + stringBuilder(args, 1), null);
-				plugin.data.saveConfig();
-			}
 		}
 		return false;
 	}

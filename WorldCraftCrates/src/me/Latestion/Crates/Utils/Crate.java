@@ -7,6 +7,7 @@ import java.util.Random;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
@@ -26,22 +27,24 @@ public class Crate {
 	String name; // Crate name
 	Main plugin;
 	
+	public List<ItemStack> getCrateItems = new ArrayList<>();
+	
 	public Crate(Main plugin, String name) {
 		this.plugin = plugin;
 		this.name = name;
+		loadCrateItems();
 	}
 	
-	public List<ItemStack> getCrateItems() {
-		List<ItemStack> send = new ArrayList<ItemStack>();
+	public void loadCrateItems() {
+		getCrateItems.clear();
 		try {
 			plugin.data.getConfig().getConfigurationSection("crates." + name + ".items").getKeys(false).forEach(num -> {
 				// num is number
 				ItemStack add = plugin.data.getConfig().getItemStack("crates." + name + ".items." + num);
-				send.add(add);
+				getCrateItems.add(add);
 			});
 		} catch (Exception e) {
 		}
-		return send;
 	}
 	
 	public void setCrateItems(List<ItemStack> items) {
@@ -70,7 +73,7 @@ public class Crate {
 	}
 	
 	public boolean isEmpty() {
-		return getCrateItems().isEmpty();
+		return !plugin.data.getConfig().contains("crates." + name + ".items.0");
 	}
 	
 	public int getPrice() {
@@ -99,6 +102,8 @@ public class Crate {
 		plugin.inProcess.add(block);
         new SpawnParticles(plugin, loc, 5, Particle.TOTEM); // Spawns the particles
         ItemStack item = getRandomItem();
+        player.getInventory().addItem(item);
+        player.updateInventory();
         String itemname = item.getItemMeta().getDisplayName();
         if (itemname.equals("")) {
         	itemname = item.getType().toString().replace('_', ' ');
@@ -110,11 +115,8 @@ public class Crate {
         	rotateLoc.subtract(0, 0.25, 0);
         }
         armorStandRotateAnimate(block.getLocation(), 10, item, rotateLoc.clone());
-        List<ItemStack> items = this.getCrateItems();
-        items.remove(item);
-        this.setCrateItems(items);
-        player.getInventory().addItem(item);
-        player.updateInventory();
+        getCrateItems.remove(item);
+        this.setCrateItems(getCrateItems);
 	}
 	
 	public Hologram createArmorStand(Location loc) {
@@ -143,18 +145,15 @@ public class Crate {
     	as.teleport(loc);
     	as.setVisible(false);
     	prepareArmorStand(as, item);
-    	plugin.mani.add(as);
+    	if (!plugin.mani.contains(as)) {
+    		plugin.mani.add(as);	
+    	}
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             public void run() {
-            	plugin.mani.remove(as);
-            	as.remove();
+            	as.setHelmet(new ItemStack(Material.AIR));
             }            
         }, i * 20);
     	plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-        	if (as.isDead()) {
-        		plugin.mani.remove(as);
-        		return;
-        	}
             loc.setYaw(loc.getYaw() +  4);
             as.teleport(loc);
         }, 0, 1);
@@ -162,8 +161,8 @@ public class Crate {
     
     private ItemStack getRandomItem() {
         Random rand = new Random();
-        int i = rand.nextInt(getCrateItems().size());
-        return getCrateItems().get(i);
+        int i = rand.nextInt(getCrateItems.size());
+        return getCrateItems.get(i);
     }
     
     private void prepareArmorStand(ArmorStand as, ItemStack item) {

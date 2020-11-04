@@ -60,11 +60,11 @@ public class InventoryClick implements Listener {
 				}
 			}
 			if (event.getSlot() == 4) {
+				player.closeInventory();
 				crate.createCrate();
 				plugin.isCreating.remove(player);
 				plugin.isBeingCreated.remove(event.getView().getTitle());
 				plugin.newCrates.remove(player);
-				player.closeInventory();
 			}
 			return;
 		}

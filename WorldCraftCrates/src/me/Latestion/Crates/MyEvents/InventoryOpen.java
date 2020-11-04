@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
 
 import me.Latestion.Crates.Main;
 import me.Latestion.Crates.Utils.Crate;
@@ -53,10 +54,10 @@ public class InventoryOpen implements Listener {
 						return;
 					}
 					UUID id = event.getPlayer().getUniqueId();
-					// OPEN A CUSTOM INVENTORY HERE FROM THE HASH HASH MAP WE MADE :)
 					CrateInv inv = new CrateInv(plugin, id, name);
-					event.getPlayer().openInventory(inv.getInventory());
-					plugin.shulkerInv.put(id, inv.getInventory());
+					Inventory invv = inv.getInventory();
+					event.getPlayer().openInventory(invv);
+					plugin.shulkerInv.put(id, invv);
 					plugin.inCrate.put(event.getPlayer(), event.getClickedBlock().getLocation());
 				}
 			}

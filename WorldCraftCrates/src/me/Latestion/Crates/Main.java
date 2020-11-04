@@ -22,6 +22,7 @@ import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 
 import me.Latestion.Crates.Commands.Executor;
+import me.Latestion.Crates.Files.CrateLootManager;
 import me.Latestion.Crates.Files.DataManager;
 import me.Latestion.Crates.MyEvents.AsInteract;
 import me.Latestion.Crates.MyEvents.InventoryClick;
@@ -37,6 +38,7 @@ public class Main extends JavaPlugin {
 
 	public Economy eco;
 	public DataManager data;
+	public CrateLootManager loot;
 	public Util util;
 	
 	public Map<String, UUID> idInstance = new HashMap<String, UUID>();
@@ -93,6 +95,7 @@ public class Main extends JavaPlugin {
 	
 	private void loadFiles() {
 		this.data = new DataManager(this);
+		// this.loot = new CrateLootManager(this);
 		this.util = new Util(this);
 		this.getCommand("crate").setExecutor(new Executor(this));
 	}
@@ -142,7 +145,7 @@ public class Main extends JavaPlugin {
 		}
 	}
 	
-    private void prepareArmorStand(ArmorStand as) {
+    public void prepareArmorStand(ArmorStand as) {
     	as.setVisible(false);
     	as.setMarker(false);
     	as.setBasePlate(false);

@@ -7,3 +7,4 @@ depend: [Vault, HolographicDisplays]
 
 commands:
   crate:
+  crateloot:

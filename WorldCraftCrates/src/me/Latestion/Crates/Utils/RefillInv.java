@@ -38,7 +38,7 @@ public class RefillInv {
 		invs.add(invv);
 		Inventory set = invv;
 		Crate crate = new Crate(plugin, name);
-		List<ItemStack> items = crate.getCrateItems();
+		List<ItemStack> items = crate.getCrateItems;
 		for (ItemStack item : items) {
 			set.setItem(i, item);
 			if (i == 44) {
